@@ -1,0 +1,88 @@
+services:
+
+  # ── Reverse proxy ────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: craft_nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - craft-network
+    restart: unless-stopped
+
+  # ── Laravel backend (PHP-FPM) ────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: craft_backend
+    volumes:
+      - ./backend:/var/www
+      - /var/www/vendor          # keep container vendor, not host
+    env_file:
+      - ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - craft-network
+    restart: unless-stopped
+
+  # ── Vue / Vite frontend (dev server) ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: craft_frontend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules        # keep container node_modules, not host
+    env_file:
+      - ./frontend/.env
+    networks:
+      - craft-network
+    restart: unless-stopped
+
+  # ── MySQL database ────────────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    container_name: craft_db
+    ports:
+      - "${DB_EXPOSE_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE:      ${DB_DATABASE:-craft_portal}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secret}
+      MYSQL_USER:          ${DB_USERNAME:-craft}
+      MYSQL_PASSWORD:      ${DB_PASSWORD:-secret}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h", "localhost",
+          "-u", "root",
+          "-p${DB_ROOT_PASSWORD:-secret}"
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    networks:
+      - craft-network
+    restart: unless-stopped
+
+networks:
+  craft-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
