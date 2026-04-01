@@ -44,8 +44,9 @@ html.dark {
   --color-surface:    var(--cp-surface);
   --color-surface-2:  var(--cp-surface-2);
   --color-border:     var(--cp-border);
-  --color-cp-text:    var(--cp-text);
-  --color-text-muted: var(--cp-text-muted);
+  --color-foreground: var(--cp-text);
+  --color-muted:      var(--cp-text-muted);
+  --color-subtle:     var(--cp-text-subtle);
   --color-accent:     var(--cp-accent);
   --color-accent-2:   var(--cp-accent-2);
 }

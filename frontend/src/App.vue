@@ -1,27 +1,16 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import NavBar from '@/components/NavBar.vue'
+import { useRoute } from 'vue-router'
+import NavBarComponent from '@/components/NavBarComponent.vue'
 import { useTheme } from '@/composables/useTheme'
 
 const { initTheme } = useTheme()
+const route = useRoute()
 
 onMounted(() => initTheme())
 </script>
 
 <template>
-  <NavBar />
-  <main class="main-content">
-    <!-- Page views will be rendered here via <router-view> -->
-    <slot />
-  </main>
+  <NavBarComponent v-if="!route.meta.hideNav" />
+  <router-view />
 </template>
-
-<style scoped>
-.main-content {
-  flex: 1;
-  padding: 32px 24px;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-</style>
